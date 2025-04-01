@@ -9,7 +9,9 @@
 #define SCREEN_1_ADDRESS 0x3C // First OLED
 #define SCREEN_2_ADDRESS 0x3D // Second OLED
 
-#define INC_BTN_1     35
+#define MODE_BTN      35
+#define INCREMENT_BTN 14
+#define DECREMENT_BTN 27
 #define PLAYER_1      32
 #define PLAYER_2      33
 #define LED           25
@@ -17,18 +19,26 @@
 Adafruit_SSD1306 display1(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 Adafruit_SSD1306 display2(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-int hours_1 = 1;
-int mins_1  = 1;
-int secs_1  = 10;
+int hours_1 = 0;
+int mins_1  = 0;
+int secs_1  = 0;
+
+int increment_1 = 0;
+int increment_2 = 0; 
 
 int hours_2 = 0;
 int mins_2  = 0;
-int secs_2  = 10;
+int secs_2  = 0;
 
 char buffer1[30];
 char buffer2[30];
 
 int initial_state= 0;
+int mode_counter =0 ;
+
+int lastButtonState = LOW; 
+unsigned long lastDebounceTime = 0;
+const int debounceDelay = 50;
 
 void setup() {
   Serial.begin(115200);
@@ -43,15 +53,94 @@ void setup() {
   // Setting pin modes for various buttons 
   pinMode(PLAYER_1,INPUT);
   pinMode(PLAYER_2,INPUT);
-  pinMode(INC_BTN_1, INPUT);
+  pinMode(MODE_BTN, INPUT);
+  pinMode(INCREMENT_BTN,INPUT);
+  pinMode(DECREMENT_BTN,INPUT);
   pinMode(LED,OUTPUT);
+
+  display1_on();
+
+  set_display1_time();
 }
 
 void loop() {
-  display1_on();
+ 
+
 }
 
 
+
+
+
+
+
+
+void set_display1_time(void){
+  while(true)
+  {
+    if(digitalRead(MODE_BTN) == HIGH)
+  {
+    delay(500);
+    mode_counter++;
+    digitalWrite(LED,HIGH);
+  }
+
+  // HOURS INCREMENT AND DECREMENT
+  if(mode_counter==1)
+  {
+    if(digitalRead(INCREMENT_BTN)==HIGH)
+    {
+      delay(500);
+      hours_1++;
+      display1_on();
+    }
+    if(digitalRead(DECREMENT_BTN)==HIGH)
+    {
+      if(hours_1 != 0){
+      delay(500);
+      hours_1--;
+      display1_on();
+      }
+    }
+  }
+  // MINUTES INCREMENT DECREMENT 
+  if(mode_counter==2)
+  {
+    if(digitalRead(INCREMENT_BTN)==HIGH)
+    {
+      delay(500);
+      mins_1++;
+      display1_on();
+    }
+    if(digitalRead(DECREMENT_BTN)==HIGH)
+    {
+      if(mins_1 != 0){
+      delay(500);
+      mins_1--;
+      display1_on();
+      }
+    }
+  }
+
+   if(mode_counter==3)
+  {
+    if(digitalRead(INCREMENT_BTN)==HIGH)
+    {
+      delay(500);
+      secs_1++;
+      display1_on();
+    }
+    if(digitalRead(DECREMENT_BTN)==HIGH)
+    {
+      if(secs_1 != 0){
+      delay(500);
+      secs_1--;
+      display1_on();
+      }
+    }
+  }
+  }
+}
 
 
 void display1_init(void){
@@ -76,25 +165,55 @@ void display1_on(void)
   display1.setCursor(15, 20);
   display1.println(buffer1);
   display1.display();  
-  delay(1000);
-  secs_1--;
-  if(secs_1<0)
-  {
-    if(mins_1>0)
-    {
-    mins_1--;
-    secs_1=59;
-    }
-  }
-  if(mins_1<0 && hours_1>0)
-  {
-    hours_1--;
-    mins_1=59;
-  }
-  if(hours_1==0 && mins_1==0 && secs_1==0)
-  {
-    return;
-  }
+ 
+}
+void timer1_on(void){
+ while (hours_1 > 0 || mins_1 > 0 || secs_1 > 0) {
+    sprintf(buffer1, "%d: %d: %d",hours_1,mins_1,secs_1);
+    display1.clearDisplay();
+    display1.setTextSize(2);
+    display1.setTextColor(WHITE);
+    display1.setCursor(15, 20);
+    display1.println(buffer1);
+    display1.display();  
+    delay(1000);
+    secs_1--;
+
+    if (secs_1 < 0) {
+        if (mins_1 > 0) {
+            mins_1--;
+            secs_1 = 59;
+        } else if (hours_1 > 0) {
+            hours_1--;
+            mins_1 = 59;
+            secs_1 = 59;
+        }
+      }
+  } return;
+}
+void timer2_on(void){
+ while (hours_1 > 0 || mins_1 > 0 || secs_1 > 0) {
+    sprintf(buffer1, "%d: %d: %d",hours_1,mins_1,secs_1);
+    display2.clearDisplay();
+    display2.setTextSize(2);
+    display2.setTextColor(WHITE);
+    display2.setCursor(15, 20);
+    display2.println(buffer1);
+    display2.display();  
+    delay(1000);
+    secs_1--;
+
+    if (secs_1 < 0) {
+        if (mins_1 > 0) {
+            mins_1--;
+            secs_1 = 59;
+        } else if (hours_1 > 0) {
+            hours_1--;
+            mins_1 = 59;
+            secs_1 = 59;
+        }
+      }
+  } return;
 }
 void display2_on(void)
 {
