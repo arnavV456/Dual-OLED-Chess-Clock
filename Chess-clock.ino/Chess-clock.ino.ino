@@ -40,13 +40,15 @@ char buffer4[30];
 int initial_state= 0;
 int mode_counter =0 ;
 
-int lastButtonState = LOW; 
-unsigned long lastDebounceTime = 0;
-const int debounceDelay = 50;
+bool should_timer_1_be_on =true;
+bool should_timer_2_be_on =true;
+
+int flag=0;
+
 
 void setup() {
   Serial.begin(115200);
-  Wire.begin(21, 22); // ESP32 I2C: SDA=21, SCL=22
+
 
   display1_init(); 
   display2_init();
@@ -59,8 +61,9 @@ void setup() {
   pinMode(PLAYER_1,INPUT);
   pinMode(PLAYER_2,INPUT);
   pinMode(MODE_BTN, INPUT);
+
   pinMode(INCREMENT_BTN,INPUT);
-  pinMode(DECREMENT_BTN,INPUT);
+  pinMode(DECREMENT_BTN,INPUT);;
   pinMode(LED,OUTPUT);
 
   display1_on();
@@ -72,9 +75,9 @@ void setup() {
 }
 
 void loop() {
-timer1_on();
 
 }
+
 
 
 
@@ -294,17 +297,6 @@ void set_display1_time(void){
     mode_counter = 0 ;
     return;
   }
-
-
-
-
-
-
-
-
-
-
-
   }
 }
 void display1_init(void){
@@ -321,6 +313,43 @@ void display2_init(void){
 }
 void display1_on(void){
 
+  sprintf(buffer1, "%d:%02d:%02d",hours_1,mins_1,secs_1);
+  display1.clearDisplay();
+  display1.setTextSize(3);
+  display1.setTextColor(WHITE);
+  display1.setCursor(0, 30);
+  display1.println(buffer1); 
+
+  // HEADING
+
+  display1.setTextSize(1);
+  display1.setTextColor(WHITE);
+  display1.setCursor(45,5);
+  display1.println("TIMER 1");
+  display1.display();
+ 
+}
+void display2_on(void)
+{
+  sprintf(buffer2, "%d:%02d:%02d",hours_2,mins_2,secs_2);
+  display2.clearDisplay();
+  display2.setTextSize(3);
+  display2.setTextColor(WHITE);
+  display2.setCursor(0, 30);
+  display2.println(buffer2);
+ 
+
+  // HEADING
+
+  display2.setTextSize(1);
+  display2.setTextColor(WHITE);
+  display2.setCursor(45,5);
+  display2.println("TIMER 2");
+  display2.display();
+}
+void timer1_on(void){
+ if(should_timer_1_be_on ==true){
+ while (hours_1 > 0 || mins_1 > 0 || secs_1 > 0) {
   sprintf(buffer1, "%d: %d: %d",hours_1,mins_1,secs_1);
   display1.clearDisplay();
   display1.setTextSize(2);
@@ -335,18 +364,7 @@ void display1_on(void){
   display1.setTextColor(WHITE);
   display1.setCursor(45,5);
   display1.println("TIMER 1");
-  display1.display();
- 
-}
-void timer1_on(void){
- while (hours_1 > 0 || mins_1 > 0 || secs_1 > 0) {
-    sprintf(buffer1, "%d: %d: %d",hours_1,mins_1,secs_1);
-    display1.clearDisplay();
-    display1.setTextSize(2);
-    display1.setTextColor(WHITE);
-    display1.setCursor(15, 20);
-    display1.println(buffer1);
-    display1.display();  
+  display1.display();  
     delay(1000);
     secs_1--;
 
@@ -361,8 +379,17 @@ void timer1_on(void){
         }
       }
   } return;
+ }
+}
+
+void timer1_off(void){
+  should_timer_1_be_on = false;
+}
+void timer2_off(void){
+  should_timer_2_be_on = false;
 }
 void timer2_on(void){
+  if(should_timer_2_be_on==false)
  while (hours_1 > 0 || mins_1 > 0 || secs_1 > 0) {
     sprintf(buffer1, "%d: %d: %d",hours_1,mins_1,secs_1);
     display2.clearDisplay();
@@ -386,24 +413,7 @@ void timer2_on(void){
       }
   } return;
 }
-void display2_on(void)
-{
-  sprintf(buffer2, "%d: %d: %d",hours_2,mins_2,secs_2);
-  display2.clearDisplay();
-  display2.setTextSize(2);
-  display2.setTextColor(WHITE);
-  display2.setCursor(20, 30);
-  display2.println(buffer2);
-  display2.display();  
 
-  // HEADING
-
-  display2.setTextSize(1);
-  display2.setTextColor(WHITE);
-  display2.setCursor(45,5);
-  display2.println("TIMER 2");
-  display2.display();
-}
 void display1_off(void){
   display1.clearDisplay();
   display1.display();
@@ -428,8 +438,7 @@ void display1_increment_on(void){
   display1.setTextSize(2);
   display1.setTextColor(WHITE);
   display1.setCursor(20, 30);
-  display1.println(buffer3);
-  display1.display();  
+  display1.println(buffer3); 
   // HEADING
   display1.setTextSize(1);
   display1.setTextColor(WHITE);
@@ -445,7 +454,6 @@ void display2_increment_on(void){
   display2.setTextColor(WHITE);
   display2.setCursor(20, 30);
   display2.println(buffer4);
-  display2.display();  
   // HEADING
   display2.setTextSize(1);
   display2.setTextColor(WHITE);
