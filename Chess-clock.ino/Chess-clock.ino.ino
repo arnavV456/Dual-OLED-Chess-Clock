@@ -44,7 +44,10 @@ bool should_timer_2_be_on =true;
 
 int flag=0;
 enum TimeField { NONE, HOURS, MINUTES, SECONDS };
+
 void display1_on(TimeField highlight = NONE);
+void display1_increment_on(TimeField highlight);
+void display2_increment_on(TimeField highlight);
 void setup() {
   Serial.begin(115200);
   display1_init(); 
@@ -138,19 +141,17 @@ void set_display1_time(void){
 
   if(mode_counter==4)
   {
-    display1_increment_on();
+    display1_increment_on(MINUTES);
     if(digitalRead(INCREMENT_BTN)==HIGH)
     {
       delay(500);
       increment_1_min++;
-      display1_increment_on();
     }
     if(digitalRead(DECREMENT_BTN)==HIGH)
     {
       if(increment_1_min != 0){
       delay(500);
       increment_1_min--;
-      display1_increment_on();
       }
     }
   } 
@@ -158,19 +159,17 @@ void set_display1_time(void){
   // set increment seconds 
   if(mode_counter==5)
   {
-    display1_increment_on();
+    display1_increment_on(SECONDS);
     if(digitalRead(INCREMENT_BTN)==HIGH)
     {
       delay(500);
       increment_1_sec++;
-      display1_increment_on();
     }
     if(digitalRead(DECREMENT_BTN)==HIGH)
     {
       if(increment_1_sec != 0){
       delay(500);
       increment_1_sec--;
-      display1_increment_on();
       }
     }
   } 
@@ -231,19 +230,17 @@ void set_display1_time(void){
 
   if(mode_counter==9)
   {
-    display2_increment_on();
+    display2_increment_on(MINUTES);
     if(digitalRead(INCREMENT_BTN)==HIGH)
     {
       delay(500);
       increment_2_min++;
-      display2_increment_on();
     }
     if(digitalRead(DECREMENT_BTN)==HIGH)
     {
       if(increment_2_min != 0){
       delay(500);
       increment_2_min--;
-      display2_increment_on();
       }
     }
   }
@@ -251,19 +248,17 @@ void set_display1_time(void){
 
   if(mode_counter==10)
   {
-    display2_increment_on();
+    display2_increment_on(SECONDS);
     if(digitalRead(INCREMENT_BTN)==HIGH)
     {
       delay(500);
       increment_2_sec++;
-      display2_increment_on();
     }
     if(digitalRead(DECREMENT_BTN)==HIGH)
     {
       if(increment_2_sec != 0){
       delay(500);
       increment_2_sec--;
-      display2_increment_on();
       }
     }
   }
@@ -447,32 +442,83 @@ void display2_off(void){
   display2.display();
 }
 
-void display1_increment_on(void){
-  sprintf(buffer3, "X: %d: %d",increment_1_min,increment_1_sec);
+void display1_increment_on(TimeField highlight){
+  
   display1.clearDisplay();
-  display1.setTextSize(2);
+  display1.setTextSize(3);
   display1.setTextColor(WHITE);
-  display1.setCursor(20, 30);
+  display1.setCursor(0, 30);
+  
+  sprintf(buffer3, "X:%02d:%02d",increment_1_min,increment_1_sec);
   display1.println(buffer3); 
   // HEADING
   display1.setTextSize(1);
   display1.setTextColor(WHITE);
   display1.setCursor(45,5);
   display1.println("INCREMENT");
+
+  if (highlight != NONE) {
+    int underlineY = 60; // bottom Y of text line
+    int xStart = 0;
+    int xEnd = 0;
+
+    switch (highlight) {
+      case HOURS:
+        xStart = 0;
+        xEnd = 30;  // Width of hours part at size 3
+        break;
+      case MINUTES:
+        xStart = 44;
+        xEnd = 75;
+        break;
+      case SECONDS:
+        xStart = 88;
+        xEnd = 123;
+        break;
+    }
+    display1.drawLine(xStart, underlineY, xEnd, underlineY, WHITE);
+  }
+
   display1.display();
 }
 
-void display2_increment_on(void){
-  sprintf(buffer4, "X: %d: %d",increment_2_min,increment_2_sec);
+void display2_increment_on(TimeField highlight){
+  
   display2.clearDisplay();
-  display2.setTextSize(2);
+  display2.setTextSize(3);
   display2.setTextColor(WHITE);
-  display2.setCursor(20, 30);
+  display2.setCursor(0, 30);
+
+  sprintf(buffer4, "X:%02d:%02d",increment_2_min,increment_2_sec);
   display2.println(buffer4);
   // HEADING
   display2.setTextSize(1);
   display2.setTextColor(WHITE);
   display2.setCursor(45,5);
   display2.println("INCREMENT");
+
+
+  if (highlight != NONE) {
+    int underlineY = 60; // bottom Y of text line
+    int xStart = 0;
+    int xEnd = 0;
+
+    switch (highlight) {
+      case HOURS:
+        xStart = 0;
+        xEnd = 30;  // Width of hours part at size 3
+        break;
+      case MINUTES:
+        xStart = 44;
+        xEnd = 75;
+        break;
+      case SECONDS:
+        xStart = 88;
+        xEnd = 123;
+        break;
+    }
+    display2.drawLine(xStart, underlineY, xEnd, underlineY, WHITE);
+  }
+
   display2.display();
 }
