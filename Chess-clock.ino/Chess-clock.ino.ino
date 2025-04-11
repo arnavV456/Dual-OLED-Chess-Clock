@@ -71,10 +71,6 @@ void loop() {
 
 }
 
-
-
-
-
 void set_display1_time(void){
   while(true)
   {
@@ -367,22 +363,8 @@ void display2_on(TimeField highlight )
 }
 void timer1_on(void){
  if(should_timer_1_be_on ==true){
- while (hours_1 > 0 || mins_1 > 0 || secs_1 > 0) {
-  sprintf(buffer1, "%d: %d: %d",hours_1,mins_1,secs_1);
-  display1.clearDisplay();
-  display1.setTextSize(2);
-  display1.setTextColor(WHITE);
-  display1.setCursor(20, 30);
-  display1.println(buffer1);
-  display1.display();  
-
-  // HEADING
-
-  display1.setTextSize(1);
-  display1.setTextColor(WHITE);
-  display1.setCursor(45,5);
-  display1.println("TIMER 1");
-  display1.display();  
+ while (hours_1 > 0 || mins_1 > 0 || secs_1 >= 0) {
+  display1_on(NONE);
     delay(1000);
     secs_1--;
 
@@ -409,13 +391,7 @@ void timer2_off(void){
 void timer2_on(void){
   if(should_timer_2_be_on==false)
  while (hours_1 > 0 || mins_1 > 0 || secs_1 > 0) {
-    sprintf(buffer1, "%d: %d: %d",hours_1,mins_1,secs_1);
-    display2.clearDisplay();
-    display2.setTextSize(2);
-    display2.setTextColor(WHITE);
-    display2.setCursor(15, 20);
-    display2.println(buffer1);
-    display2.display();  
+    display2_on(NONE); 
     delay(1000);
     secs_1--;
 
