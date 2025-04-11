@@ -12,8 +12,7 @@
 #define MODE_BTN      35
 #define INCREMENT_BTN 14
 #define DECREMENT_BTN 27
-#define PLAYER_1      32
-#define PLAYER_2      33
+#define PLAYER_BTN    32
 #define LED           25
 
 Adafruit_SSD1306 display1(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
@@ -44,43 +43,30 @@ bool should_timer_1_be_on =true;
 bool should_timer_2_be_on =true;
 
 int flag=0;
-
-
+enum TimeField { NONE, HOURS, MINUTES, SECONDS };
+void display1_on(TimeField highlight = NONE);
 void setup() {
   Serial.begin(115200);
-
-
   display1_init(); 
   display2_init();
 
-  // Setting the initial state of the main button so we can start the game when this state changes 
-  initial_state = set_initial_state();
-
 
   // Setting pin modes for various buttons 
-  pinMode(PLAYER_1,INPUT);
-  pinMode(PLAYER_2,INPUT);
+  pinMode(PLAYER_BTN,INPUT);
   pinMode(MODE_BTN, INPUT);
 
   pinMode(INCREMENT_BTN,INPUT);
   pinMode(DECREMENT_BTN,INPUT);;
   pinMode(LED,OUTPUT);
 
-  display1_on();
-  display2_on();
-
+  display1_on(NONE);
+  display2_on(NONE);
   set_display1_time();
  
- 
 }
-
 void loop() {
 
 }
-
-
-
-
 
 
 
@@ -94,59 +80,56 @@ void set_display1_time(void){
     delay(500);
     mode_counter++;
     digitalWrite(LED,HIGH);
+    
   }
 
   // HOURS INCREMENT AND DECREMENT
   if(mode_counter==1)
-  {
+  { 
+    display1_on(HOURS);
     if(digitalRead(INCREMENT_BTN)==HIGH)
     {
       delay(500);
-      hours_1++;
-      display1_on();
+      hours_1++; 
     }
     if(digitalRead(DECREMENT_BTN)==HIGH)
     {
       if(hours_1 != 0){
       delay(500);
       hours_1--;
-      display1_on();
       }
     }
   }
   // MINUTES INCREMENT DECREMENT 
   if(mode_counter==2)
   {
+    display1_on(MINUTES);
     if(digitalRead(INCREMENT_BTN)==HIGH)
     {
       delay(500);
       mins_1++;
-      display1_on();
     }
     if(digitalRead(DECREMENT_BTN)==HIGH)
     {
       if(mins_1 != 0){
       delay(500);
       mins_1--;
-      display1_on();
       }
     }
   }
    // SET seconds for timer 1
    if(mode_counter==3)
-  {
+  { display1_on(SECONDS);
     if(digitalRead(INCREMENT_BTN)==HIGH)
     {
       delay(500);
       secs_1++;
-      display1_on();
     }
     if(digitalRead(DECREMENT_BTN)==HIGH)
     {
       if(secs_1 != 0){
       delay(500);
       secs_1--;
-      display1_on();
       }
     }
   }
@@ -196,56 +179,50 @@ void set_display1_time(void){
   if(mode_counter==6)
   {
     display1_on();
-    display2_on();
+    display2_on(HOURS);
    if(digitalRead(INCREMENT_BTN)==HIGH)
     {
       delay(500);
       hours_2++;
-      display2_on();
     }
     if(digitalRead(DECREMENT_BTN)==HIGH)
     {
       if(hours_2 != 0){
       delay(500);
       hours_2--;
-      display2_on();
       }
     }
   } 
   if(mode_counter==7)
   {
-    display2_on();
+    display2_on(MINUTES);
    if(digitalRead(INCREMENT_BTN)==HIGH)
     {
       delay(500);
       mins_2++;
-      display2_on();
     }
     if(digitalRead(DECREMENT_BTN)==HIGH)
     {
       if(mins_2 != 0){
       delay(500);
       mins_2--;
-      display2_on();
       }
     }
   } 
 
    if(mode_counter==8)
   {
-    display2_on();
+    display2_on(SECONDS);
    if(digitalRead(INCREMENT_BTN)==HIGH)
     {
       delay(500);
       secs_2++;
-      display2_on();
     }
     if(digitalRead(DECREMENT_BTN)==HIGH)
     {
       if(secs_2 != 0){
       delay(500);
       secs_2--;
-      display2_on();
       }
     }
   } 
@@ -293,7 +270,7 @@ void set_display1_time(void){
 
   if (mode_counter >10)
   {
-    display2_on();
+    display2_on(NONE);
     mode_counter = 0 ;
     return;
   }
@@ -311,40 +288,86 @@ void display2_init(void){
     for (;;);
   }
 }
-void display1_on(void){
-
-  sprintf(buffer1, "%d:%02d:%02d",hours_1,mins_1,secs_1);
+void display1_on(TimeField highlight ){
   display1.clearDisplay();
   display1.setTextSize(3);
   display1.setTextColor(WHITE);
   display1.setCursor(0, 30);
+  
+  sprintf(buffer1, "%d:%02d:%02d", hours_1, mins_1, secs_1);
   display1.println(buffer1); 
 
   // HEADING
-
   display1.setTextSize(1);
-  display1.setTextColor(WHITE);
-  display1.setCursor(45,5);
+  display1.setCursor(45, 5);
   display1.println("TIMER 1");
+
+  // UNDERLINE
+  if (highlight != NONE) {
+    int underlineY = 60; // bottom Y of text line
+    int xStart = 0;
+    int xEnd = 0;
+
+    switch (highlight) {
+      case HOURS:
+        xStart = 0;
+        xEnd = 30;  // Width of hours part at size 3
+        break;
+      case MINUTES:
+        xStart = 44;
+        xEnd = 75;
+        break;
+      case SECONDS:
+        xStart = 88;
+        xEnd = 123;
+        break;
+    }
+    display1.drawLine(xStart, underlineY, xEnd, underlineY, WHITE);
+  }
+
   display1.display();
- 
 }
-void display2_on(void)
+
+void display2_on(TimeField highlight )
 {
-  sprintf(buffer2, "%d:%02d:%02d",hours_2,mins_2,secs_2);
+  
   display2.clearDisplay();
   display2.setTextSize(3);
   display2.setTextColor(WHITE);
   display2.setCursor(0, 30);
-  display2.println(buffer2);
+  
  
-
+  sprintf(buffer2, "%d:%02d:%02d",hours_2,mins_2,secs_2);
+  display2.println(buffer2);
   // HEADING
 
   display2.setTextSize(1);
   display2.setTextColor(WHITE);
   display2.setCursor(45,5);
   display2.println("TIMER 2");
+  
+  if (highlight != NONE) {
+    int underlineY = 60; // bottom Y of text line
+    int xStart = 0;
+    int xEnd = 0;
+
+    switch (highlight) {
+      case HOURS:
+        xStart = 0;
+        xEnd = 30;  // Width of hours part at size 3
+        break;
+      case MINUTES:
+        xStart = 44;
+        xEnd = 75;
+        break;
+      case SECONDS:
+        xStart = 88;
+        xEnd = 123;
+        break;
+    }
+    display2.drawLine(xStart, underlineY, xEnd, underlineY, WHITE);
+  }
+
   display2.display();
 }
 void timer1_on(void){
@@ -423,15 +446,7 @@ void display2_off(void){
   display2.clearDisplay();
   display2.display();
 }
-int set_initial_state(){
-  if(digitalRead(PLAYER_1)==HIGH)
-  {
-    return PLAYER_1;
-  }
-  else{
-    return PLAYER_2;
-  }
-}
+
 void display1_increment_on(void){
   sprintf(buffer3, "X: %d: %d",increment_1_min,increment_1_sec);
   display1.clearDisplay();
