@@ -15,8 +15,6 @@
 #define PLAYER_BTN_1  32
 #define PLAYER_BTN_2  33
 
-#define LED           25
-
 Adafruit_SSD1306 display1(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 Adafruit_SSD1306 display2(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
@@ -44,7 +42,7 @@ int mode_counter =0 ;
 volatile bool should_timer_1_be_on =false;
 volatile bool should_timer_2_be_on =false;
 
-int flag=0;
+volatile int flag=0;
 enum TimeField { NONE, HOURS, MINUTES, SECONDS };
 
 void display1_on(TimeField highlight = NONE);
@@ -92,7 +90,6 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(PLAYER_BTN_2), player1Playing, FALLING); 
   pinMode(INCREMENT_BTN,INPUT);
   pinMode(DECREMENT_BTN,INPUT);;
-  pinMode(LED,OUTPUT);
 
   display1_on(NONE);
   display2_on(NONE);
@@ -123,7 +120,6 @@ void set_display1_time(void){
   {
     delay(500);
     mode_counter++;
-    digitalWrite(LED,HIGH);
     
   }
 
