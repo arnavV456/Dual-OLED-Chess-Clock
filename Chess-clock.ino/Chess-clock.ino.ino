@@ -12,35 +12,37 @@
 #define MODE_BTN      35
 #define INCREMENT_BTN 14
 #define DECREMENT_BTN 27
-#define PLAYER_BTN    32
+#define PLAYER_BTN_1  32
+#define PLAYER_BTN_2  33
+
 #define LED           25
 
 Adafruit_SSD1306 display1(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 Adafruit_SSD1306 display2(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-int hours_1 = 0;
-int mins_1  = 0;
-int secs_1  = 0;
+volatile int hours_1 = 0;
+volatile int mins_1  = 10;
+volatile int secs_1  = 0;
 
 int increment_1_min = 0;
-int increment_1_sec = 0;
+int increment_1_sec = 5;
 int increment_2_min = 0;
-int increment_2_sec = 0; 
+int increment_2_sec = 5; 
 
-int hours_2 = 0;
-int mins_2  = 0;
-int secs_2  = 0;
+volatile int hours_2 = 0;
+volatile int mins_2  = 10;
+volatile int secs_2  = 0;
 
-char buffer1[30];
-char buffer2[30];
-char buffer3[30];
-char buffer4[30];
+char buffer1[15];
+char buffer2[15];
+char buffer3[15];
+char buffer4[15];
 
 int initial_state= 0;
 int mode_counter =0 ;
 
-bool should_timer_1_be_on =true;
-bool should_timer_2_be_on =true;
+volatile bool should_timer_1_be_on =false;
+volatile bool should_timer_2_be_on =false;
 
 int flag=0;
 enum TimeField { NONE, HOURS, MINUTES, SECONDS };
@@ -48,6 +50,33 @@ enum TimeField { NONE, HOURS, MINUTES, SECONDS };
 void display1_on(TimeField highlight = NONE);
 void display1_increment_on(TimeField highlight);
 void display2_increment_on(TimeField highlight);
+
+void IRAM_ATTR player2Playing(){
+  if(flag==0)
+  {
+    should_timer_2_be_on = true;
+    should_timer_1_be_on = false;
+
+  }
+  else 
+  {
+    should_timer_2_be_on = false;
+    should_timer_1_be_on = true;
+  }
+}
+void IRAM_ATTR player1Playing(){
+  if(flag==0)
+  {
+    should_timer_2_be_on = false;
+    should_timer_1_be_on = true;
+
+  }
+  else 
+  {
+    should_timer_2_be_on = true;
+    should_timer_1_be_on = false;
+  }
+}
 void setup() {
   Serial.begin(115200);
   display1_init(); 
@@ -55,9 +84,12 @@ void setup() {
 
 
   // Setting pin modes for various buttons 
-  pinMode(PLAYER_BTN,INPUT);
+  pinMode(PLAYER_BTN_1,INPUT);
+  pinMode(PLAYER_BTN_2,INPUT);
   pinMode(MODE_BTN, INPUT);
 
+  attachInterrupt(digitalPinToInterrupt(PLAYER_BTN_1), player2Playing, FALLING);
+  attachInterrupt(digitalPinToInterrupt(PLAYER_BTN_2), player1Playing, FALLING); 
   pinMode(INCREMENT_BTN,INPUT);
   pinMode(DECREMENT_BTN,INPUT);;
   pinMode(LED,OUTPUT);
@@ -68,6 +100,19 @@ void setup() {
  
 }
 void loop() {
+  if(should_timer_1_be_on == true)
+  {
+   should_timer_2_be_on = false;
+    timer1_on();
+  }
+  if(should_timer_2_be_on == true)
+  {
+    
+   should_timer_1_be_on = false;
+    timer2_on();
+  }
+
+
 
 }
 
@@ -318,7 +363,6 @@ void display1_on(TimeField highlight ){
 
   display1.display();
 }
-
 void display2_on(TimeField highlight )
 {
   
@@ -362,52 +406,97 @@ void display2_on(TimeField highlight )
   display2.display();
 }
 void timer1_on(void){
- if(should_timer_1_be_on ==true){
- while (hours_1 > 0 || mins_1 > 0 || secs_1 >= 0) {
-  display1_on(NONE);
-    delay(1000);
-    secs_1--;
+ if(should_timer_1_be_on ==true)
+ {
+    while (hours_1 > 0 || mins_1 > 0 || secs_1 >= 0) 
+    {
+      display1_on(NONE);
+        delay(1000);
+        secs_1--;
 
-    if (secs_1 < 0) {
-        if (mins_1 > 0) {
-            mins_1--;
-            secs_1 = 59;
-        } else if (hours_1 > 0) {
-            hours_1--;
-            mins_1 = 59;
-            secs_1 = 59;
-        }
+        if (secs_1 < 0) 
+        {
+            if (mins_1 > 0) 
+            {
+                mins_1--;
+                secs_1 = 59;
+            } else if (hours_1 > 0) 
+            {
+                hours_1--;
+                mins_1 = 59;
+                secs_1 = 59;
+            }
+          }
+          if(should_timer_1_be_on ==true)
+          continue;
+          else
+          break;
+        } 
+  }
+
+  if(should_timer_1_be_on ==false){
+    secs_1 += increment_1_sec;
+    if (secs_1 > 59) {
+    mins_1 += secs_1 / 59;
+    secs_1 = (secs_1 % 59);
+    }
+    mins_1 += increment_1_min;
+    if (mins_1 > 59) {
+        hours_1 += mins_1 / 59;
+        mins_1 = (mins_1 % 59);
       }
-  } return;
- }
-}
+      display1_on(NONE);
+      return;
+  }
+  
 
-void timer1_off(void){
-  should_timer_1_be_on = false;
-}
-void timer2_off(void){
-  should_timer_2_be_on = false;
 }
 void timer2_on(void){
-  if(should_timer_2_be_on==false)
- while (hours_1 > 0 || mins_1 > 0 || secs_1 > 0) {
-    display2_on(NONE); 
-    delay(1000);
-    secs_1--;
+  if(should_timer_2_be_on ==true)
+ {
+    while (hours_2 > 0 || mins_2 > 0 || secs_2 >= 0) 
+    {
+      display2_on(NONE);
+        delay(1000);
+        secs_2--;
 
-    if (secs_1 < 0) {
-        if (mins_1 > 0) {
-            mins_1--;
-            secs_1 = 59;
-        } else if (hours_1 > 0) {
-            hours_1--;
-            mins_1 = 59;
-            secs_1 = 59;
-        }
+        if (secs_2 < 0) 
+        {
+            if (mins_2 > 0) 
+            {
+                mins_2--;
+                secs_2 = 59;
+            } else if (hours_2 > 0) 
+            {
+                hours_2--;
+                mins_2 = 59;
+                secs_2 = 59;
+            }
+          }
+          if(should_timer_2_be_on ==true)
+          continue;
+          else
+          break;
+        } 
+  }
+
+  if(should_timer_2_be_on ==false){
+    secs_2 += increment_2_sec;
+    if (secs_2 >= 60) {
+    mins_2 += secs_2 / 60;
+    secs_2 = (secs_2 % 60)+1;
+    }
+    mins_2 += increment_2_min;
+    if (mins_2 >= 60) {
+        hours_2 += mins_2 / 60;
+        mins_2 = (mins_2 % 60)+1;
       }
-  } return;
-}
+      display2_on(NONE);
+      return;
+  }
+  
 
+}
 void display1_off(void){
   display1.clearDisplay();
   display1.display();
